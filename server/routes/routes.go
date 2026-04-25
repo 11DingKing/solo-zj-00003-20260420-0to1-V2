@@ -45,5 +45,14 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			slots.GET("/:date", controllers.GetAvailableSlots)
 		}
+
+		notifications := api.Group("/notifications")
+		{
+			notifications.GET("", controllers.GetNotifications)
+			notifications.GET("/unread-count", controllers.GetUnreadCount)
+			notifications.PUT("/:id/read", controllers.MarkAsRead)
+			notifications.PUT("/mark-all-read", controllers.MarkAllAsRead)
+			notifications.GET("/stream", controllers.SSEStream)
+		}
 	}
 }

@@ -175,9 +175,30 @@ func UpdateSchedule(c *gin.Context) {
 		return
 	}
 
+	var affectedAppointments []models.Appointment
+	config.DB.Where(
+		"technician_id = ? AND date = ? AND status IN ?",
+		schedule.TechnicianID, schedule.Date,
+		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+	).Preload("Technician").Find(&affectedAppointments)
+
 	if err := config.DB.Save(&schedule).Error; err != nil {
 		c.Error(err)
 		return
+	}
+
+	for _, appt := range affectedAppointments {
+		title := "排班变更提醒"
+		content := fmt.Sprintf("您预约的技师 %s 的排班有调整，请关注您的预约时间：%s %s-%s",
+			appt.Technician.Name, appt.Date, appt.StartTime, appt.EndTime)
+		appointmentID := appt.ID
+		CreateNotificationForCustomer(
+			appt.CustomerPhone,
+			models.NotificationTypeScheduleChanged,
+			title,
+			content,
+			&appointmentID,
+		)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -197,7 +218,7 @@ func DeleteSchedule(c *gin.Context) {
 	}
 
 	var schedule models.Schedule
-	if err := config.DB.First(&schedule, uint(id)).Error; err != nil {
+	if err := config.DB.Preload("Technician").First(&schedule, uint(id)).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
 			"message": "Schedule not found",
@@ -205,9 +226,30 @@ func DeleteSchedule(c *gin.Context) {
 		return
 	}
 
+	var affectedAppointments []models.Appointment
+	config.DB.Where(
+		"technician_id = ? AND date = ? AND status IN ?",
+		schedule.TechnicianID, schedule.Date,
+		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+	).Preload("Technician").Find(&affectedAppointments)
+
 	if err := config.DB.Delete(&schedule).Error; err != nil {
 		c.Error(err)
 		return
+	}
+
+	for _, appt := range affectedAppointments {
+		title := "排班变更提醒"
+		content := fmt.Sprintf("您预约的技师 %s 的排班已取消，请重新预约：原预约时间 %s %s-%s",
+			appt.Technician.Name, appt.Date, appt.StartTime, appt.EndTime)
+		appointmentID := appt.ID
+		CreateNotificationForCustomer(
+			appt.CustomerPhone,
+			models.NotificationTypeScheduleChanged,
+			title,
+			content,
+			&appointmentID,
+		)
 	}
 
 	c.JSON(http.StatusOK, gin.H{

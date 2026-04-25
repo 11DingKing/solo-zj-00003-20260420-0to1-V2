@@ -57,3 +57,32 @@ func (a *Appointment) BeforeCreate(scope *gorm.Scope) error {
 	}
 	return nil
 }
+
+type NotificationType string
+
+const (
+	NotificationTypeAppointmentCreated  NotificationType = "appointment_created"
+	NotificationTypeAppointmentCancelled NotificationType = "appointment_cancelled"
+	NotificationTypeScheduleChanged      NotificationType = "schedule_changed"
+)
+
+type ReceiverType string
+
+const (
+	ReceiverTypeTechnician ReceiverType = "technician"
+	ReceiverTypeCustomer   ReceiverType = "customer"
+)
+
+type Notification struct {
+	ID           uint             `gorm:"primary_key" json:"id"`
+	CreatedAt    time.Time        `json:"created_at"`
+	UpdatedAt    time.Time        `json:"-"`
+	DeletedAt    *time.Time       `sql:"index" json:"-"`
+	ReceiverID   string           `gorm:"not null;index" json:"receiver_id"`
+	ReceiverType ReceiverType     `gorm:"not null;type:varchar(20)" json:"receiver_type"`
+	Type         NotificationType `gorm:"not null;type:varchar(50)" json:"type"`
+	Title        string           `gorm:"not null" json:"title"`
+	Content      string           `gorm:"type:text" json:"content"`
+	AppointmentID *uint           `json:"appointment_id"`
+	IsRead       bool             `gorm:"default:false" json:"is_read"`
+}

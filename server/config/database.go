@@ -33,7 +33,7 @@ func ConnectDB() {
 
 	log.Println("Database connected successfully")
 
-	DB.AutoMigrate(&models.Technician{}, &models.Schedule{}, &models.Appointment{})
+	DB.AutoMigrate(&models.Technician{}, &models.Schedule{}, &models.Appointment{}, &models.Notification{})
 
 	initData()
 }

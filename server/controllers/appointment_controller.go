@@ -64,17 +64,37 @@ func CreateAppointment(c *gin.Context) {
 	appointment.StartTime = normalizeTime(appointment.StartTime)
 	appointment.EndTime = normalizeTime(appointment.EndTime)
 
-	var count int
+	var dailyUserCount int64
 	config.DB.Model(&models.Appointment{}).Where(
+		"customer_phone = ? AND date = ? AND status IN ?",
+		appointment.CustomerPhone, appointment.Date,
+		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+	).Count(&dailyUserCount)
+
+	if dailyUserCount >= 2 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "同一用户同一天不能预约超过2次",
+		})
+		return
+	}
+
+	var existingAppointments []models.Appointment
+	config.DB.Where(
 		"technician_id = ? AND date = ? AND start_time = ? AND status IN ?",
 		appointment.TechnicianID, appointment.Date, appointment.StartTime,
 		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
-	).Count(&count)
+	).Find(&existingAppointments)
 
-	if count >= 3 {
-		c.JSON(http.StatusBadRequest, gin.H{
+	if len(existingAppointments) > 0 {
+		c.JSON(http.StatusConflict, gin.H{
 			"success": false,
-			"message": "该时间段已约满，请选择其他时间",
+			"message": fmt.Sprintf("该技师在 %s %s 时间段已有预约", appointment.Date, appointment.StartTime),
+			"conflict": gin.H{
+				"date":       appointment.Date,
+				"start_time": appointment.StartTime,
+				"end_time":   appointment.EndTime,
+			},
 		})
 		return
 	}
@@ -87,6 +107,18 @@ func CreateAppointment(c *gin.Context) {
 	}
 
 	config.DB.Preload("Technician").First(&appointment, appointment.ID)
+
+	title := "新预约提醒"
+	content := fmt.Sprintf("您有一个新预约：客户 %s，时间 %s %s-%s",
+		appointment.CustomerName, appointment.Date, appointment.StartTime, appointment.EndTime)
+	appointmentID := appointment.ID
+	CreateNotificationForTechnician(
+		appointment.TechnicianID,
+		models.NotificationTypeAppointmentCreated,
+		title,
+		content,
+		&appointmentID,
+	)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
@@ -337,6 +369,18 @@ func CancelAppointment(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+
+	title := "预约取消提醒"
+	content := fmt.Sprintf("客户 %s 取消了预约，原预约时间：%s %s-%s",
+		appointment.CustomerName, appointment.Date, appointment.StartTime, appointment.EndTime)
+	appointmentID := appointment.ID
+	CreateNotificationForTechnician(
+		appointment.TechnicianID,
+		models.NotificationTypeAppointmentCancelled,
+		title,
+		content,
+		&appointmentID,
+	)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
