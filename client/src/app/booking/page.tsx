@@ -135,7 +135,7 @@ export default function BookingPage() {
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               min={dayjs().format('YYYY-MM-DD')}
-              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
             />
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function BookingPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="请输入您的姓名"
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     />
                   </div>
 
@@ -248,7 +248,7 @@ export default function BookingPage() {
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="请输入您的手机号"
                       maxLength={11}
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     />
                   </div>
 

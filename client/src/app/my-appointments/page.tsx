@@ -110,7 +110,7 @@ export default function MyAppointmentsPage() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="请输入预约时使用的手机号"
               maxLength={11}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
             />
           </div>
           <div className="flex items-end">

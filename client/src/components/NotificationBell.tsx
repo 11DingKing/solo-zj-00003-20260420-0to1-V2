@@ -153,7 +153,7 @@ export default function NotificationBell() {
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={userType === 'technician' ? '请输入技师ID' : '请输入手机号'}
                   maxLength={userType === 'customer' ? 11 : undefined}
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                 />
               </div>
 

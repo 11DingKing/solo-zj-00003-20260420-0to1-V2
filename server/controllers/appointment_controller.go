@@ -66,7 +66,7 @@ func CreateAppointment(c *gin.Context) {
 
 	var dailyUserCount int64
 	config.DB.Model(&models.Appointment{}).Where(
-		"customer_phone = ? AND date = ? AND status IN ?",
+		"customer_phone = ? AND DATE(date) = DATE(?) AND status IN ?",
 		appointment.CustomerPhone, appointment.Date,
 		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
 	).Count(&dailyUserCount)
@@ -81,17 +81,21 @@ func CreateAppointment(c *gin.Context) {
 
 	var existingAppointments []models.Appointment
 	config.DB.Where(
-		"technician_id = ? AND date = ? AND start_time = ? AND status IN ?",
+		"technician_id = ? AND DATE(date) = DATE(?) AND start_time = ? AND status IN ?",
 		appointment.TechnicianID, appointment.Date, appointment.StartTime,
 		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
 	).Find(&existingAppointments)
 
 	if len(existingAppointments) > 0 {
+		cleanDate := appointment.Date
+		if len(cleanDate) >= 10 {
+			cleanDate = cleanDate[:10]
+		}
 		c.JSON(http.StatusConflict, gin.H{
 			"success": false,
-			"message": fmt.Sprintf("该技师在 %s %s 时间段已有预约", appointment.Date, appointment.StartTime),
+			"message": fmt.Sprintf("该技师在 %s %s 时间段已有预约", cleanDate, appointment.StartTime),
 			"conflict": gin.H{
-				"date":       appointment.Date,
+				"date":       cleanDate,
 				"start_time": appointment.StartTime,
 				"end_time":   appointment.EndTime,
 			},
@@ -108,9 +112,13 @@ func CreateAppointment(c *gin.Context) {
 
 	config.DB.Preload("Technician").First(&appointment, appointment.ID)
 
+	cleanDate := appointment.Date
+	if len(cleanDate) >= 10 {
+		cleanDate = cleanDate[:10]
+	}
 	title := "新预约提醒"
 	content := fmt.Sprintf("您有一个新预约：客户 %s，时间 %s %s-%s",
-		appointment.CustomerName, appointment.Date, appointment.StartTime, appointment.EndTime)
+		appointment.CustomerName, cleanDate, appointment.StartTime, appointment.EndTime)
 	appointmentID := appointment.ID
 	CreateNotificationForTechnician(
 		appointment.TechnicianID,
@@ -370,9 +378,13 @@ func CancelAppointment(c *gin.Context) {
 		return
 	}
 
+	cleanDate := appointment.Date
+	if len(cleanDate) >= 10 {
+		cleanDate = cleanDate[:10]
+	}
 	title := "预约取消提醒"
 	content := fmt.Sprintf("客户 %s 取消了预约，原预约时间：%s %s-%s",
-		appointment.CustomerName, appointment.Date, appointment.StartTime, appointment.EndTime)
+		appointment.CustomerName, cleanDate, appointment.StartTime, appointment.EndTime)
 	appointmentID := appointment.ID
 	CreateNotificationForTechnician(
 		appointment.TechnicianID,

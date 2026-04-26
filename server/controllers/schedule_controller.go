@@ -188,9 +188,13 @@ func UpdateSchedule(c *gin.Context) {
 	}
 
 	for _, appt := range affectedAppointments {
+		cleanDate := appt.Date
+		if len(cleanDate) >= 10 {
+			cleanDate = cleanDate[:10]
+		}
 		title := "排班变更提醒"
 		content := fmt.Sprintf("您预约的技师 %s 的排班有调整，请关注您的预约时间：%s %s-%s",
-			appt.Technician.Name, appt.Date, appt.StartTime, appt.EndTime)
+			appt.Technician.Name, cleanDate, appt.StartTime, appt.EndTime)
 		appointmentID := appt.ID
 		CreateNotificationForCustomer(
 			appt.CustomerPhone,
@@ -228,7 +232,7 @@ func DeleteSchedule(c *gin.Context) {
 
 	var affectedAppointments []models.Appointment
 	config.DB.Where(
-		"technician_id = ? AND date = ? AND status IN ?",
+		"technician_id = ? AND DATE(date) = DATE(?) AND status IN ?",
 		schedule.TechnicianID, schedule.Date,
 		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
 	).Preload("Technician").Find(&affectedAppointments)
@@ -239,9 +243,13 @@ func DeleteSchedule(c *gin.Context) {
 	}
 
 	for _, appt := range affectedAppointments {
+		cleanDate := appt.Date
+		if len(cleanDate) >= 10 {
+			cleanDate = cleanDate[:10]
+		}
 		title := "排班变更提醒"
 		content := fmt.Sprintf("您预约的技师 %s 的排班已取消，请重新预约：原预约时间 %s %s-%s",
-			appt.Technician.Name, appt.Date, appt.StartTime, appt.EndTime)
+			appt.Technician.Name, cleanDate, appt.StartTime, appt.EndTime)
 		appointmentID := appt.ID
 		CreateNotificationForCustomer(
 			appt.CustomerPhone,
