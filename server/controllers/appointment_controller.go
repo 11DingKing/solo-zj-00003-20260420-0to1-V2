@@ -113,10 +113,6 @@ func CreateAppointment(c *gin.Context) {
 
 	config.DB.Preload("Technician").First(&appointment, appointment.ID)
 
-	cleanDate := appointment.Date
-	if len(cleanDate) >= 10 {
-		cleanDate = cleanDate[:10]
-	}
 	title := "新预约提醒"
 	content := fmt.Sprintf("您有一个新预约：客户 %s，时间 %s %s-%s",
 		appointment.CustomerName, cleanDate, appointment.StartTime, appointment.EndTime)
