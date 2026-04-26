@@ -59,6 +59,8 @@ export const technicianApi = {
   update: (id: number, data: Partial<Technician>) =>
     api.put<{ success: boolean; data: Technician }>(`/technicians/${id}`, data),
   delete: (id: number) => api.delete(`/technicians/${id}`),
+  validate: (id: number) =>
+    api.get<{ success: boolean; data: Technician }>(`/technicians/${id}`),
 };
 
 export const scheduleApi = {
@@ -116,6 +118,10 @@ export const appointmentApi = {
   getByPhone: (phone: string) =>
     api.get<{ success: boolean; data: Appointment[] }>(
       `/appointments/customer/${phone}`,
+    ),
+  validateCustomerPhone: (phone: string) =>
+    api.get<{ success: boolean; exists: boolean }>(
+      `/appointments/validate/${phone}`,
     ),
 };
 

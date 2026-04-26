@@ -64,10 +64,15 @@ func CreateAppointment(c *gin.Context) {
 	appointment.StartTime = normalizeTime(appointment.StartTime)
 	appointment.EndTime = normalizeTime(appointment.EndTime)
 
+	cleanDate := appointment.Date
+	if len(cleanDate) >= 10 {
+		cleanDate = cleanDate[:10]
+	}
+
 	var dailyUserCount int64
 	config.DB.Model(&models.Appointment{}).Where(
-		"customer_phone = ? AND DATE(date) = DATE(?) AND status IN ?",
-		appointment.CustomerPhone, appointment.Date,
+		"customer_phone = ? AND date::date = ?::date AND status IN ?",
+		appointment.CustomerPhone, cleanDate,
 		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
 	).Count(&dailyUserCount)
 
@@ -81,16 +86,12 @@ func CreateAppointment(c *gin.Context) {
 
 	var existingAppointments []models.Appointment
 	config.DB.Where(
-		"technician_id = ? AND DATE(date) = DATE(?) AND start_time = ? AND status IN ?",
-		appointment.TechnicianID, appointment.Date, appointment.StartTime,
+		"technician_id = ? AND date::date = ?::date AND start_time = ? AND status IN ?",
+		appointment.TechnicianID, cleanDate, appointment.StartTime,
 		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
 	).Find(&existingAppointments)
 
 	if len(existingAppointments) > 0 {
-		cleanDate := appointment.Date
-		if len(cleanDate) >= 10 {
-			cleanDate = cleanDate[:10]
-		}
 		c.JSON(http.StatusConflict, gin.H{
 			"success": false,
 			"message": fmt.Sprintf("该技师在 %s %s 时间段已有预约", cleanDate, appointment.StartTime),
@@ -431,4 +432,16 @@ func normalizeTime(timeStr string) string {
 	minute, _ := strconv.Atoi(parts[1])
 
 	return fmt.Sprintf("%02d:%02d", hour, minute)
+}
+
+func ValidateCustomerPhone(c *gin.Context) {
+	phone := c.Param("phone")
+
+	var count int64
+	config.DB.Model(&models.Appointment{}).Where("customer_phone = ?", phone).Count(&count)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"exists":  count > 0,
+	})
 }

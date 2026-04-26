@@ -39,6 +39,7 @@ func SetupRoutes(r *gin.Engine) {
 			appointments.PUT("/:id/complete", controllers.CompleteAppointment)
 			appointments.PUT("/:id/cancel", controllers.CancelAppointment)
 			appointments.GET("/customer/:phone", controllers.GetCustomerAppointments)
+			appointments.GET("/validate/:phone", controllers.ValidateCustomerPhone)
 		}
 
 		slots := api.Group("/slots")
