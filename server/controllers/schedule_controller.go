@@ -177,9 +177,9 @@ func UpdateSchedule(c *gin.Context) {
 
 	var affectedAppointments []models.Appointment
 	config.DB.Where(
-		"technician_id = ? AND date = ? AND status IN ?",
+		"technician_id = ? AND CAST(date AS DATE) = CAST(? AS DATE) AND status IN (?)",
 		schedule.TechnicianID, schedule.Date,
-		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+		[]string{string(models.StatusPending), string(models.StatusConfirmed)},
 	).Preload("Technician").Find(&affectedAppointments)
 
 	if err := config.DB.Save(&schedule).Error; err != nil {
@@ -232,9 +232,9 @@ func DeleteSchedule(c *gin.Context) {
 
 	var affectedAppointments []models.Appointment
 	config.DB.Where(
-		"technician_id = ? AND DATE(date) = DATE(?) AND status IN ?",
+		"technician_id = ? AND CAST(date AS DATE) = CAST(? AS DATE) AND status IN (?)",
 		schedule.TechnicianID, schedule.Date,
-		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+		[]string{string(models.StatusPending), string(models.StatusConfirmed)},
 	).Preload("Technician").Find(&affectedAppointments)
 
 	if err := config.DB.Delete(&schedule).Error; err != nil {
@@ -356,9 +356,9 @@ func GetAvailableSlots(c *gin.Context) {
 		for _, slot := range slots {
 			var count int
 			config.DB.Model(&models.Appointment{}).Where(
-				"technician_id = ? AND date = ? AND start_time = ? AND status IN ?",
+				"technician_id = ? AND CAST(date AS DATE) = CAST(? AS DATE) AND start_time = ? AND status IN (?)",
 				tech.ID, date, slot.StartTime,
-				[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+				[]string{string(models.StatusPending), string(models.StatusConfirmed)},
 			).Count(&count)
 
 			slotsWithAvailability = append(slotsWithAvailability, map[string]interface{}{
