@@ -86,7 +86,25 @@ export default function BookingPage() {
       }
     } catch (error: any) {
       console.error('Failed to book appointment:', error)
-      toast.error(error.response?.data?.message || '预约失败')
+      const status = error.response?.status
+      const message = error.response?.data?.message || '预约失败'
+      
+      if (status === 409) {
+        const conflict = error.response?.data?.conflict
+        if (conflict) {
+          toast.error(`时间段冲突：${conflict.date} ${conflict.start_time}-${conflict.end_time} 已被预约`, {
+            duration: 4000,
+          })
+        } else {
+          toast.error('该时间段已被预约，请选择其他时间', {
+            duration: 4000,
+          })
+        }
+      } else if (status === 400) {
+        toast.error(message, { duration: 4000 })
+      } else {
+        toast.error(message)
+      }
     } finally {
       setBookingLoading(false)
     }

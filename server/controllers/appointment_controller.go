@@ -71,9 +71,9 @@ func CreateAppointment(c *gin.Context) {
 
 	var dailyUserCount int64
 	config.DB.Model(&models.Appointment{}).Where(
-		"customer_phone = ? AND date::date = ?::date AND status IN ?",
+		"customer_phone = ? AND CAST(date AS DATE) = CAST(? AS DATE) AND status IN (?)",
 		appointment.CustomerPhone, cleanDate,
-		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+		[]string{string(models.StatusPending), string(models.StatusConfirmed)},
 	).Count(&dailyUserCount)
 
 	if dailyUserCount >= 2 {
@@ -86,9 +86,9 @@ func CreateAppointment(c *gin.Context) {
 
 	var existingAppointments []models.Appointment
 	config.DB.Where(
-		"technician_id = ? AND date::date = ?::date AND start_time = ? AND status IN ?",
+		"technician_id = ? AND CAST(date AS DATE) = CAST(? AS DATE) AND start_time = ? AND status IN (?)",
 		appointment.TechnicianID, cleanDate, appointment.StartTime,
-		[]models.AppointmentStatus{models.StatusPending, models.StatusConfirmed},
+		[]string{string(models.StatusPending), string(models.StatusConfirmed)},
 	).Find(&existingAppointments)
 
 	if len(existingAppointments) > 0 {
